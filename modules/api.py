@@ -1,6 +1,9 @@
 import uvicorn
 from fastapi import FastAPI, Body, APIRouter
 from pydantic import BaseModel, Field
+from typing import List
+from fastapi.middleware.cors import CORSMiddleware
+
 import json
 import io
 import base64
@@ -31,13 +34,13 @@ class TextToImage(BaseModel):
 
 
 class TextToImageResponse(BaseModel):
-    images: list[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
-    all_prompts: list[str] = Field(default=None, title="All Prompts", description="The prompt text.")
+    images: List[str] = Field(default=None, title="Image", description="The generated image in base64 format.")
+    all_prompts: List[str] = Field(default=None, title="All Prompts", description="The prompt text.")
     negative_prompt: str = Field(default=None, title="Negative Prompt Text")
     seed: int = Field(default=None, title="Seed")
-    all_seeds: list[int] = Field(default=None, title="All Seeds")
+    all_seeds: List[int] = Field(default=None, title="All Seeds")
     subseed: int = Field(default=None, title="Subseed")
-    all_subseeds: list[int] = Field(default=None, title="All Subseeds")
+    all_subseeds: List[int] = Field(default=None, title="All Subseeds")
     subseed_strength: float = Field(default=None, title="Subseed Strength")
     width: int = Field(default=None, title="Width")
     height: int = Field(default=None, title="Height")
@@ -58,7 +61,13 @@ class TextToImageResponse(BaseModel):
 
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class Api:
     def __init__(self, txt2img, img2img, run_extras, run_pnginfo):
@@ -68,7 +77,7 @@ class Api:
         self.run_pnginfo = run_pnginfo
 
         self.router = APIRouter()
-        app.add_api_route("/v1/txt2img", self.txt2imgendoint, response_model=TextToImageResponse)
+        app.add_api_route("/v1/txt2img", self.txt2imgendoint, response_model=TextToImageResponse, methods=["GET", "POST"])
         # app.add_api_route("/v1/img2img", self.img2imgendoint)
         # app.add_api_route("/v1/extras", self.extrasendoint)
         # app.add_api_route("/v1/pnginfo", self.pnginfoendoint)
